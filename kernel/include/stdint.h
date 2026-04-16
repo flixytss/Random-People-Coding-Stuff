@@ -10,13 +10,8 @@ typedef char int8_t;
 typedef short int16_t;
 typedef int int32_t;
 typedef long int64_t;
-// NULL is by the way
-#define NULL  0
-#define true  1
-#define false 0
-#define SIZE_MAX 2147483647 
-
 typedef short char16_t;
 typedef int char32_t;
-typedef int bool ;
 
+// NULL is by the way
+#define NULL  ((void*)0)

@@ -31,7 +31,6 @@ void* kmalloc(unsigned long size);
 void kfree(void* p);
 void combine_blocks();
 //Pumpkicks
-extern unsigned long memend; // The memory size from the 0x1000
 int strlen(char* ptr);
 
 typedef unsigned int size_t;

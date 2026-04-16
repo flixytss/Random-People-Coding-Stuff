@@ -1,5 +1,5 @@
 #include "string.h"
-#include <stdint.h>
+
 static void strcpy(char* d, const char* s) {
     int i = 0; while (s[i]) { d[i] = s[i]; i++; } d[i] = 0;
 }
