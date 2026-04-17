@@ -4,8 +4,8 @@
  */
 #include <stdint.h>
 #include <mem/mem.h>
-#define BLOCK_SIZE      4096     // Size of 1 block of memory, 4KB
-#define BLOCKS_PER_BYTE 8        // Using a bitmap, each byte will hold 8 bits/blocks
+#include <string.h>
+#include "physical_mem.h"
 
 // Global variables
 static uint32_t *memory_map = 0;

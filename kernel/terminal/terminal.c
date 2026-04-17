@@ -3,9 +3,10 @@
 #include "../mem.h"
 #include "terminal.h"
 #include "../gk/gk.h"
+#include "include/stdarg.h"
 #include <stdint.h>
 
-uint16_t terminal_column = 0; 
+uint16_t terminal_column = 0;
 uint16_t terminal_row = 0;
 static int history_count = 0;
 static int history_head  = 0;
@@ -19,7 +20,7 @@ void putchar(char c, uint8_t color) {
 		terminal_row++;
 	}
 	else if (c == '\t') {
-		for (int j = 0; j < 4; j++) { 
+		for (int j = 0; j < 4; j++) {
             putchar(' ', color); // Print 4 spaces when tab is pressed
         }
 	}
@@ -146,7 +147,7 @@ void input(unsigned char* buff, size_t buffer_size, uint8_t color) {
                 int slot = (history_head - browse_idx + HISTORY_SIZE) % HISTORY_SIZE;
                 src = history_entries[slot];
             }
-            
+
             // Clear the line in the framebuffer
             for (size_t k = 0; k < terminal_column-start_x; k++) {
                 size_t col = (start_x + k) % VGA_TEXT_WIDTH;
@@ -172,7 +173,7 @@ void input(unsigned char* buff, size_t buffer_size, uint8_t color) {
             continue;
         }
         unsigned char ascii = scancode_to_ascii(sc);
-    
+
         // Exit input if enter is pressed
         if (ascii == '\n') break;
 
@@ -182,7 +183,7 @@ void input(unsigned char* buff, size_t buffer_size, uint8_t color) {
                 if (terminal_column > 0) {
                     terminal_column--;
                 }
-                else if (terminal_row > 0) { 
+                else if (terminal_row > 0) {
                     terminal_row = VGA_TEXT_WIDTH - 1;
                     terminal_row--;
                 }
@@ -190,7 +191,7 @@ void input(unsigned char* buff, size_t buffer_size, uint8_t color) {
                 putentryat(' ', color, terminal_column, terminal_row);
                 buff_count--;
                 buff[buff_count] = 0;
-                
+
                 // Update cursor
                 move_tcursor(terminal_column, terminal_row);
             }
@@ -200,7 +201,7 @@ void input(unsigned char* buff, size_t buffer_size, uint8_t color) {
         // Display the character entered and place it in the input buffer
         if (buff_count < buffer_size - 1 && ascii >= 0x20) {
             buff[buff_count] = ascii;
-            
+
             putchar(ascii, color);
             buff_count++;
         }
@@ -215,40 +216,137 @@ void input(unsigned char* buff, size_t buffer_size, uint8_t color) {
 void print_hex(uint32_t n)
 {
     int32_t tmp;
-
     print("0x");
-
     char noZeroes = 1;
-
     int i;
-    for (i = 28; i > 0; i -= 4)
-    {
+    for (i = 28; i > 0; i -= 4) {
         tmp = (n >> i) & 0xF;
-        if (tmp == 0 && noZeroes != 0)
-        {
-            continue;
-        }
-    
-        if (tmp >= 0xA)
-        {
+        if (tmp == 0 && noZeroes != 0) continue;
+
+        if (tmp >= 0xA) {
             noZeroes = 0;
             putchar (tmp-0xA+'a', VGA_COLOR_WHITE);
-        }
-        else
-        {
+        } else {
             noZeroes = 0;
             putchar( tmp+'0', VGA_COLOR_WHITE);
         }
     }
-  
+
     tmp = n & 0xF;
-    if (tmp >= 0xA)
-    {
-        putchar (tmp-0xA+'a', VGA_COLOR_WHITE);
-    }
-    else
-    {
-        putchar( tmp+'0', VGA_COLOR_WHITE);
+    if (tmp >= 0xA) { putchar (tmp-0xA+'a', VGA_COLOR_WHITE); }
+    else { putchar( tmp+'0', VGA_COLOR_WHITE); }
+}
+
+// here
+void printf(const char* fmt, ...) {
+    va_list list;
+    va_start(list, fmt);
+
+    int i = 0;
+    int r = 0;
+    while (fmt[i]) {
+        if (r) r--;
+        if (fmt[i] == '%') {
+            const char c = fmt[i + 1] ? fmt[i + 1] : '%';
+
+            switch (c) {
+                case 'x':
+                case 'p':
+                    r += 2;
+                    print_hex(va_arg(list, uint32_t));
+                    break;
+                case 'd':
+                    r += 2;
+                    print_int(va_arg(list, int));
+                    break;
+                case 's':
+                    r += 2;
+                    print(va_arg(list, char*));
+                    break;
+                default: continue;
+            }
+        } else if (!r) putchar(fmt[i], VGA_COLOR_WHITE);
+        i++;
     }
 
+    va_end(list);
+}
+void savehex(uint32_t n, char* buffer)
+{
+    int32_t tmp;
+    strcat(buffer, "0x");
+    char noZeroes = 1;
+    int i;
+    char cc[2];
+    cc[1] = 0;
+    for (i = 28; i > 0; i -= 4) {
+        tmp = (n >> i) & 0xF;
+        if (tmp == 0 && noZeroes != 0) continue;
+
+        if (tmp >= 0xA) {
+            noZeroes = 0;
+            cc[0] = tmp-0xA+'a';
+            strcat(buffer, cc);
+        } else {
+            noZeroes = 0;
+            cc[0] = tmp+0;
+            strcat(buffer, cc);
+        }
+    }
+
+    tmp = n & 0xF;
+    if (tmp >= 0xA) {
+        cc[0] = tmp-0xA+'a';
+        strcat(buffer, cc);
+    }
+    else {
+        cc[0] = tmp+0;
+        strcat(buffer, cc);
+    }
+}
+void sprintf(char* buffer, const char* fmt, ...) {
+    va_list list;
+    va_start(list, fmt);
+
+    int i = 0;
+    int r = 0;
+    while (fmt[i]) {
+        if (r) r--;
+        if (fmt[i] == '%') {
+            const char c = fmt[i + 1] ? fmt[i + 1] : '%';
+            int _;
+
+            switch (c) {
+                case 'x':
+                case 'p':
+                    r += 2;
+                    savehex(va_arg(list, uint32_t), buffer);
+                    break;
+                case 'd':
+                    r += 2;
+                    _ = va_arg(list, int);
+                    if (_ == 0) { buffer[strlen(buffer)] = '0'; }
+                    char tmp[32];
+                    int neg = 0, i = 0;
+                    if (_ < 0) { neg = 1; _ = -_; }
+                    while (_ > 0) { tmp[i++] = '0' + (_ % 10); _ /= 10; }
+                    if (neg) tmp[i++] = '-';
+                    for (int j = 0; j < i; j++) strncat(buffer + j, tmp + (i - 1 - j), 1);
+                    break;
+                case 's':
+                    r += 2;
+                    strcat(buffer, va_arg(list, char*));
+                    break;
+                case '%':
+                    r += 2;
+                    strncat(buffer + i - 1, "%", 1);
+                    break;
+                default: break;
+            }
+        } else if (!r) strncat(buffer, fmt + i, 1);
+        i++;
+    }
+    buffer[strlen(buffer)] = 0;
+
+    va_end(list);
 }
