@@ -59,9 +59,6 @@ static void kmain()
 {
     get_kdrive(0);
 
-    char niffer[125];
-    sprintf(niffer, "Yes%%%x%s%d%dhey\n", 10, "as", 120, 100);
-    print(niffer);
     do_login_prompt();
 
     while (1) {
