@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include "gdt.h"
-#include "../tss/tss.h"
+#include <drivers/tables/gdt/gdt.h>
+#include <drivers/tables/tss/tss.h>
 
 gdt_entry_t gdt_entries[6]; //ember2819: 6 slots: null, k-code, k-data, u-code, u-data, TSS
 gdt_ptr_t   gdt_ptr;

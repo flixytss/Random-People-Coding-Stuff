@@ -1,7 +1,7 @@
-#include "../isr/isr.h"
-#include "../../../ports.h"
-#include "../idt/idt.h"
-#include "../../../terminal/terminal.h"
+#include <drivers/tables/isr/isr.h>
+#include <ports.h>
+#include <drivers/tables/idt/idt.h>
+#include <terminal/terminal.h>
 #include <stdint.h>
 
 extern void irq0();
@@ -111,4 +111,4 @@ void irq_handler(registers_t regs)
        isr_t handler = irq_routines[regs.int_no - 32];
        handler(&regs);
    }
-} 
+}

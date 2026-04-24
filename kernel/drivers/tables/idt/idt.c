@@ -1,9 +1,9 @@
-#include "idt.h"
-#include "../../../mem.h"
-#include "../../../ports.h"
-#include "../../../colors.h"
-#include "../../../terminal/terminal.h"
-#include "../irq/irq.h"
+#include <drivers/tables/idt/idt.h>
+#include <mem.h>
+#include <ports.h>
+#include <colors.h>
+#include <terminal/terminal.h>
+#include <drivers/tables/irq/irq.h>
 #include <string.h>
 
 idt_entry_t idt_entries[256];

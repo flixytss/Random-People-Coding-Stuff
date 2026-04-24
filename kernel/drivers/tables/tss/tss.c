@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include "tss.h"
-#include "../gdt/gdt.h"
+#include <drivers/tables/tss/tss.h>
+#include <drivers/tables/gdt/gdt.h>
 
 tss_entry_t tss;
 

@@ -1,8 +1,8 @@
 //ember2819
-#include "users.h"
-#include "../mem.h"
-#include "../terminal/terminal.h"
-#include "../drivers/vga.h"
+#include <users.h>
+#include <mem.h>
+#include <terminal/terminal.h>
+#include <drivers/vga.h>
 #include <stdint.h>
 #include <string.h>
 

@@ -1,9 +1,9 @@
 //Ember2819
-#include "ata.h"
-#include "../ports.h"
+#include <drivers/ata.h>
+#include <ports.h>
 #include <stdint.h>
-#include "drives.h"
-#include "../terminal/terminal.h"
+#include <drivers/drives.h>
+#include <terminal/terminal.h>
 
 static int drive_present[2] = {0, 0};
 
@@ -67,7 +67,7 @@ static int ata_check_drive(int drive) {
 
 	uint8_t mid = inb(ATA_PRIMARY_BASE + ATA_REG_LBA_MID);
 	uint8_t hi  = inb(ATA_PRIMARY_BASE + ATA_REG_LBA_HI);
-	if (mid != 0 || hi != 0) return 0; 
+	if (mid != 0 || hi != 0) return 0;
 
 	if (ata_poll_drq() != 0) return 0;
 

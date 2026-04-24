@@ -2,7 +2,7 @@
 // Renamed from comos_lexer.c to gk_lexer.c
 // Updated all ComoState/COMOS references to GkState/GK
 //ember2819 end
-#include "gk.h"
+#include <gk/gk.h>
 #include <string.h>
 
 static int gk_strlen(const char* s) {

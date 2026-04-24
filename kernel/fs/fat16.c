@@ -1,10 +1,10 @@
-#include "fat16.h"
-#include "../drivers/ata.h"
-#include "../mem.h"
-#include "../terminal/terminal.h"
-#include "../colors.h"
-#include "../partition/partition.h"
-#include "fs.h"
+#include <fs/fat16.h>
+#include <drivers/ata.h>
+#include <mem.h>
+#include <terminal/terminal.h>
+#include <colors.h>
+#include <partition/partition.h>
+#include <fs/fs.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -34,13 +34,13 @@ typedef struct __attribute__((packed)) {
 
 // A single 32-byte directory entry.
 typedef struct __attribute__((packed)) {
-    uint8_t  name[8];            // Filename 
-    uint8_t  ext[3];             // Extension 
-    uint8_t  attributes;         // File attribute flags 
+    uint8_t  name[8];            // Filename
+    uint8_t  ext[3];             // Extension
+    uint8_t  attributes;         // File attribute flags
     uint8_t  reserved;
     uint8_t  create_time_tenth;  // Creation time
     uint16_t create_time;        // Creation time also
-    uint16_t create_date;        // Creation date 
+    uint16_t create_date;        // Creation date
     uint16_t access_date;        // Last access date
     uint16_t first_cluster_high;
     uint16_t write_time;         // Last write time
@@ -140,7 +140,7 @@ static size_t fat16_file_read( struct drive_file_t *file, size_t offset, size_t 
 
 	uint16_t clusters_to_skip;
 	FAT16_Volume *pvolume;
-	
+
 	size_t lba;
 	size_t i;
 
@@ -238,7 +238,7 @@ static uint16_t fat16_alloc_cluster(struct kdrive_t *drive, FAT16_Volume *pvol)
 		for (e = 0; e < entries_per_sector; e++) {
 			uint16_t val = *(uint16_t *)(tmp + e * 2);
 			uint16_t cluster = (uint16_t)(s * entries_per_sector + e);
-			if (cluster < 2) continue; 
+			if (cluster < 2) continue;
 			if (val == FAT16_CLUSTER_FREE) {
 				*(uint16_t *)(tmp + e * 2) = FAT16_CLUSTER_EOC;
 				if (drive->write((void*)drive, pvol->fat_lba + s, 1, tmp) < 0) return 0;
@@ -543,7 +543,7 @@ static struct fs_entries_t fat16_get_root_entries( struct drive_fs_t *fs )
 
 		for ( i = 0; i < pvolume->bpb.bytes_per_sector / 32; i++ )
 		{
-			first = entries[i].name[0]; 
+			first = entries[i].name[0];
 
 			if (first == FAT16_ENTRY_END) goto done_listing_count;
 			if (first == FAT16_ENTRY_FREE) continue;
@@ -567,7 +567,7 @@ done_listing_count:
 
 		for ( i = 0; i < pvolume->bpb.bytes_per_sector / 32; i++ )
 		{
-			first = entries[i].name[0]; 
+			first = entries[i].name[0];
 
 			if (first == FAT16_ENTRY_END) goto done_listing;
 			if (first == FAT16_ENTRY_FREE) continue;

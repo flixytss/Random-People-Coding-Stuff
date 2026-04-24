@@ -14,7 +14,7 @@ MULTIBOOT_CHECKSUM    equ -(MULTIBOOT_INPUT_MAGIC + MULTIBOOT_FLAGS)
 
 ; Define a section in the executable, and write out three 32-bit values
 ; (double-words, dd). Make sure to align these to a 4 byte boundary.
-section .multiboot
+section .multiboot.data
 align 4
   dd MULTIBOOT_INPUT_MAGIC
   dd MULTIBOOT_FLAGS

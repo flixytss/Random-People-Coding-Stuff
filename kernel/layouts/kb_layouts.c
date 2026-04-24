@@ -1,9 +1,9 @@
 // Added by MorganPG1 to make implementation of https://github.com/Ember2819/Random-People-Coding-Stuff/issues/32 easier
-#include "kb_layouts.h"
+#include <layouts/kb_layouts.h>
 
 KeyboardLayout LAYOUTS[] = {
     { // US QWERTY
-        { 
+        {
                 0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t',
                 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0,
                 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0, '\\',
@@ -34,7 +34,7 @@ KeyboardLayout LAYOUTS[] = {
         }
     },
     { // UK QWERTY (added by MorganPG1)
-        { 
+        {
                 0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t',
                 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0,
                 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0, '#',

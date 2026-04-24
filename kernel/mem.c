@@ -1,4 +1,5 @@
-#include "mem.h"
+#include <mem.h>
+#include "terminal/printf.h"
 #include "terminal/terminal.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -9,10 +10,10 @@
 void *heap_ptr = 0;
 
 void parse_bda() {
-  printf("com1 port: %x\n", BDA_ADDR->com_port[0]);
-  printf("lpt1 port: %x\n", BDA_ADDR->lpt_port[0]);
-  printf("usable memory: %d KB\n", BDA_ADDR->usable_memory);
-  printf("ebda address: 0x%p\n", BDA_ADDR->ebda_addr << 4);
+  printkf("com1 port: %x\n", BDA_ADDR->com_port[0]);
+  printkf("lpt1 port: %x\n", BDA_ADDR->lpt_port[0]);
+  printkf("usable memory: %d KB\n", BDA_ADDR->usable_memory);
+  printkf("ebda address: 0x%p\n", BDA_ADDR->ebda_addr << 4);
 }
 
 uint8_t dlim(char c, const char *delim) {
@@ -196,7 +197,7 @@ struct alloc {
 
 struct alloc_hdr {
   size_t size;
-  uint32_t magic;  
+  uint32_t magic;
 
   uint8_t  ord;
   uint8_t  pad;
@@ -331,7 +332,7 @@ static void km_free(struct alloc *a, void *ptr) {
 
   struct alloc_hdr *h = ((struct alloc_hdr *)ptr) - 1;
   if (h->magic != HDR_MAGIC) {
-    printf("free %p doesn't have proper magic! (%04x)\n", ptr, h->magic);
+    printkf("free %p doesn't have proper magic! (%04x)\n", ptr, h->magic);
     return;
   }
   int ord = h->ord;

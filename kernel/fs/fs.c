@@ -1,11 +1,11 @@
-#include "fs.h"
-#include "fat16.h"
+#include <fs/fs.h>
+#include <fs/fat16.h>
 #include <limits.h>
 
 struct drive_fs_t *fs_drive_open( struct kdrive_t *drive )
 {
 	struct partition_t part;
-	
+
 	part.type = FS_FAT16;
 	part.lba = 0;
 	part.size = INT_MAX;
