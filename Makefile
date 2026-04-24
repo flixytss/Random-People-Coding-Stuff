@@ -22,7 +22,7 @@ OBJECTS := $(patsubst ./kernel/%.c,./build/%.o, $(SOURCES))
 # then all the .s's, name change to avoid conflict with .c sources w the same name
 OBJECTS := $(patsubst %.s,./build/%_s.o, $(OBJECTS))
 
-all: boot.iso run
+all: run
 
 # If no clang detected, use gcc
 build/%.o: kernel/%.c

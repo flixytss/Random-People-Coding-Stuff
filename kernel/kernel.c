@@ -31,8 +31,10 @@ static void kmain(multiboot_info_t* multiboot);
 
 __attribute__((section(".text")))
 void kernel_main(multiboot_info_t* multiboot) {
-    pmm_init(_kernel_end, multiboot->mem_upper - multiboot->mem_lower);
-    pmm_map_region(_kernel_end, multiboot->mem_upper - multiboot->mem_lower);
+    if (!multiboot) return;
+
+    pmm_init(_kernel_end, multiboot->mem_upper * multiboot->mem_lower);
+    pmm_map_region(_kernel_end, multiboot->mem_upper * multiboot->mem_lower);
     init_virtual_memory_manager();
 
     // Initialise display
@@ -61,6 +63,8 @@ void kernel_main(multiboot_info_t* multiboot) {
 static void kmain(multiboot_info_t* multiboot)
 {
     get_kdrive(0);
+
+    printkf("%d\n", multiboot->mem_upper * multiboot->mem_lower);
 
     do_login_prompt();
 
