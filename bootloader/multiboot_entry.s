@@ -6,8 +6,6 @@ HIGHER equ 0xC0000000 ; Unused
 
 ; define the "kernel_main" function, which this code is going to call
 extern kernel_main
-extern _kernel_start
-extern _kernel_end
 
 section .bootstrap_stack
     align 4096

@@ -33,8 +33,8 @@ __attribute__((section(".text")))
 void kernel_main(multiboot_info_t* multiboot) {
     if (!multiboot) return;
 
-    pmm_init(_kernel_end, multiboot->mem_upper * multiboot->mem_lower);
-    pmm_map_region(_kernel_end, multiboot->mem_upper * multiboot->mem_lower);
+    pmm_init(_kernel_end, multiboot->mem_upper + multiboot->mem_lower);
+    pmm_map_region(_kernel_end, multiboot->mem_upper + multiboot->mem_lower);
     init_virtual_memory_manager();
 
     // Initialise display
