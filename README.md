@@ -1,5 +1,20 @@
 # Gecko OS
 
+<!--toc:start-->
+- [Gecko OS](#gecko-os)
+  - [Vision](#vision)
+  - [Features](#features)
+  - [Roadmap](#roadmap)
+  - [How to Contribute](#how-to-contribute)
+  - [Building](#building)
+    - [Prerequisites (Linux)](#prerequisites-linux)
+    - [Build Commands](#build-commands)
+  - [Contact](#contact)
+  - [Screenshots](#screenshots)
+  - [Contributors](#contributors)
+  - [TODO](#todo)
+<!--toc:end-->
+
 A community-built bare-metal operating system for x86 machines, written entirely from scratch.
 
 ## Vision
@@ -88,7 +103,9 @@ sudo pacman -S base-devel binutils nasm clang qemu-system-x86 grub
 
 ## Screenshots
 
+**This video is an old version of the actual OS!**
 ![2026-03-22 20-42-07](https://github.com/user-attachments/assets/4af57872-342f-45e0-9eb0-31b1033c9d54)
+**This is the actual new version (unless there is a new version in the sources...)**
 
 ## Contributors
 
@@ -96,7 +113,7 @@ sudo pacman -S base-devel binutils nasm clang qemu-system-x86 grub
 - Sifi11 (Founder)
 - Crim (OG)
 - CheeseFunnel23
-- **bonk enjoyer/dorito girl** (Bootloader Creator)
+- **bonk enjoyer/dorito girl** (Bootloader Creator (of the main branch))
 - KaleidoscopeOld5841
 - billythemoon (V1 Website creator)
 - TheGirl790 (OG)
