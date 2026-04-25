@@ -15,7 +15,7 @@ pt_entry *get_pt_entry(page_table *pt, virtual_address addr) {
 }
 
 pd_entry *get_pd_entry(page_directory *pd, virtual_address addr) {
-    if (pd) return &pd->entries[PT_IDX(addr)];
+    if (pd) return &pd->entries[PD_IDX(addr)];
     return 0;
 }
 

@@ -1,5 +1,6 @@
 //#include "kernel.h"
 #include "drivers/pci.h"
+#include "pagefault.h"
 #include "terminal/printf.h"
 #include <drivers/tables/gdt/gdt.h>
 #include <drivers/tables/idt/idt.h>
@@ -43,6 +44,7 @@ void kernel_main(multiboot_info_t* multiboot) {
     printc("----- GeckoOS v1.2 -----\n", TERM_COLOR);
     printc("Built by random people on the internet.\n", TERM_COLOR);
     printkf("VMM Returned %d, %s\n", status, status ? "VMM failed, Good luck" : "VMM has been initalized"); // Log
+    // irq_install_handler(14, page_fault);
 
     // Setup keyboard layouts
     set_layout(LAYOUTS[0]);
@@ -66,7 +68,7 @@ static void kmain(multiboot_info_t* multiboot)
 {
     get_kdrive(0);
 
-    printkf("%d\n", multiboot->mem_upper + multiboot->mem_lower);
+    // printkf("%d\n", multiboot->mem_upper + multiboot->mem_lower);
 
     do_login_prompt();
 
