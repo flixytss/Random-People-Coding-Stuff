@@ -32,7 +32,7 @@ static void kmain(multiboot_info_t* multiboot);
 
 __attribute__((section(".text")))
 void kernel_main(multiboot_info_t* multiboot) {
-    if (!multiboot) return;
+    if (!multiboot || !(multiboot->flags & 0x1)) return; // Enters in a bootloop
 
     pmm_init(_kernel_end, multiboot->mem_upper + multiboot->mem_lower);
     pmm_map_region(_kernel_end, multiboot->mem_upper + multiboot->mem_lower);

@@ -38,7 +38,7 @@ kernel.elf: $(OBJECTS)
 kernel.bin: kernel.elf
 	$(OBJCOPY) $(OBJCOPY_ARGS) $^ $@
 $(ISO): kernel.elf
-	mv $^ iso/boot
+	mv $^ iso/boot/kernel32.elf
 	grub-mkrescue -o $@ iso
 
 # Launch the image in QEMU
