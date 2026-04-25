@@ -1,18 +1,18 @@
 # Gecko OS
 
 <!--toc:start-->
-- [Gecko OS](#gecko-os)
-  - [Vision](#vision)
-  - [Features](#features)
-  - [Roadmap](#roadmap)
-  - [How to Contribute](#how-to-contribute)
-  - [Building](#building)
-    - [Prerequisites (Linux)](#prerequisites-linux)
-    - [Build Commands](#build-commands)
-  - [Contact](#contact)
-  - [Screenshots](#screenshots)
-  - [Contributors](#contributors)
-  - [TODO](#todo)
+* [Gecko OS](#gecko-os)
+  * [Vision](#vision)
+  * [Features](#features)
+  * [Roadmap](#roadmap)
+  * [How to Contribute](#how-to-contribute)
+  * [Building](#building)
+    * [Prerequisites (Linux)](#prerequisites-linux)
+    * [Build Commands](#build-commands)
+  * [Contact](#contact)
+  * [Screenshots](#screenshots)
+  * [Contributors](#contributors)
+  * [TODO](#todo)
 <!--toc:end-->
 
 A community-built bare-metal operating system for x86 machines, written entirely from scratch.
@@ -88,7 +88,7 @@ sudo pacman -S base-devel binutils nasm clang qemu-system-x86 grub
 
 ### Build Commands
 
-- `make all` - Produces `boot.iso` and run it
+- `make` - Produces `geckoos.iso` and run it
 - `make run` - Builds and runs in QEMU
 
 ## Contact
@@ -99,7 +99,6 @@ sudo pacman -S base-devel binutils nasm clang qemu-system-x86 grub
   - [Slack](https://join.slack.com/t/communtiyos/shared_invite/zt-3t3iltj77-5JTo~dkpCm44tZcyA0Or_w)
   - [Matrix](https://matrix.to/#/#geckoos-official:matrix.org)
   - [Stoat](https://stt.gg/Cv2wabFH)
-  - [Fluxer](https://fluxer.gg/6K7A79x1)
 
 ## Screenshots
 
