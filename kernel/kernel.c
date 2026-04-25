@@ -35,12 +35,14 @@ void kernel_main(multiboot_info_t* multiboot) {
 
     pmm_init(_kernel_end, multiboot->mem_upper + multiboot->mem_lower);
     pmm_map_region(_kernel_end, multiboot->mem_upper + multiboot->mem_lower);
-    init_virtual_memory_manager();
+    int status = init_virtual_memory_manager();
+    // irq_install_handler();
 
     // Initialise display
     vga_clear(TERM_COLOR);
     printc("----- GeckoOS v1.2 -----\n", TERM_COLOR);
     printc("Built by random people on the internet.\n", TERM_COLOR);
+    printkf("VMM Returned %d, %s\n", status, status ? "VMM failed, Good luck" : "VMM has been initalized"); // Log
 
     // Setup keyboard layouts
     set_layout(LAYOUTS[0]);

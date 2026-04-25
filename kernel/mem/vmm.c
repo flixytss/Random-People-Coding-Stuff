@@ -119,7 +119,7 @@ int init_virtual_memory_manager(void) {
     // Create a default page directory
     page_directory *dir = (page_directory *)pmm_alloc_blocks(3);
 
-    if (!dir) for (;;); // Out of memory
+    if (!dir) return 1; // Out of memory
 
     // Clear page directory and set as current
     memset(dir, 0, sizeof(page_directory));
@@ -129,12 +129,12 @@ int init_virtual_memory_manager(void) {
         // Allocate page table for 0-4MB
     page_table *table = (page_table *)pmm_alloc_blocks(1);
 
-    if (!table) return 0;   // Out of memory
+    if (!table) return 1;   // Out of memory
 
     // Allocate a 3GB page table
     page_table *table3G = (page_table *)pmm_alloc_blocks(1);
 
-    if (!table3G) return 0;   // Out of memory
+    if (!table3G) return 1;   // Out of memory
 
     // Clear page tables
     memset(table, 0, sizeof(page_table));
@@ -180,5 +180,5 @@ int init_virtual_memory_manager(void) {
     // Enable paging: Set PG (paging) bit 31 and PE (protection enable) bit 0 of CR0
     __asm__ __volatile__ ("movl %CR0, %EAX; orl $0x80010000, %EAX; movl %EAX, %CR0");
 
-    return 1;
+    return 0;
 }
