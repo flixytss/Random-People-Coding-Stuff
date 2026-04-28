@@ -68,4 +68,6 @@ void run_command(unsigned char *input, uint8_t color);
 
 void do_login_prompt(void);
 
+extern struct drive_fs_t *fs;
+
 #endif

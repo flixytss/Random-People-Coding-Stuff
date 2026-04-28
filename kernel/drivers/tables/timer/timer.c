@@ -45,6 +45,6 @@ void timer_wait(int ticks)
     unsigned long eticks;
 
     eticks = timer_ticks + ticks;
-    while(timer_ticks < eticks) { PAUSE(); }
+    while(timer_ticks < eticks) { pause }
 }
 int get_tick() { return timer_ticks; }

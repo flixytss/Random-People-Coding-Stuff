@@ -1,6 +1,7 @@
 #ifndef _IDT_H
 #define _IDT_H
 
+#include "drivers/tables/isr/isr.h"
 #include <stdint.h>
 
 struct idt_entry_struct

@@ -1,3 +1,4 @@
+#include "terminal/printf.h"
 #include <drivers/drives.h>
 #include <mem.h>
 #include <drivers/ata.h>
@@ -21,7 +22,7 @@ static void load_parameters( struct kdrive_t *drive )
 
 		drive->partitions.count = 4;
 		drive->partitions.type = PARTITION_MBR;
-		drive->partitions.partitions = malloc(sizeof(struct partition_t));
+		drive->partitions.partitions = malloc(sizeof(struct partition_t) * 4);
 		for ( i = 0; i < 4; i++ )
 		{
 			drive->partitions.partitions[i].type = FS_FAT16;
@@ -48,6 +49,7 @@ void register_kdrive(struct kdrive_t *drive)
 
 struct kdrive_t *get_kdrive( int i )
 {
+    for ( int x = 0; x < 32; x++ ) if (drives[x].read) printkf("%d: %d\n", x, drives[x].read);
 	if (drives[i].read == 0)
 		return NULL;
 	return &drives[i];
@@ -55,7 +57,7 @@ struct kdrive_t *get_kdrive( int i )
 
 void drives_init()
 {
-	memset(drives, 0, sizeof(drives));
+	// memset(drives, 0, sizeof(drives));
 	ata_init();
 
 }

@@ -1,3 +1,4 @@
+#include "terminal/printf.h"
 #include <fs/fat16.h>
 #include <drivers/ata.h>
 #include <mem.h>

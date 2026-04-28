@@ -2,16 +2,16 @@ ENTRY (_entry)
 
 SECTIONS
 {
-        . = 1M;
-	/* The kernel will live at 3GB + 1MB in the virtual address space, */
-	/* which will be mapped to 1MB in the physical address space. */
-	/* Note that we page-align the sections. */
+    g_localApicAddr = 0x00006000;
+    g_activeCpuCount = 0x00006008;
+
+    . = 1M;
 
 	_kernel_start = .;
     .multiboot.data : {
         *(.multiboot.data)
     }
-	/* Add a symbol that indicates the start address of the kernel. */
+
 	.text :
 	{
 		*(.text)
@@ -21,6 +21,7 @@ SECTIONS
 	.data :
 	{
 		*(.data)
+		__data_end__ = .;
 		. = ALIGN(4096);
 	}
 	.bss :
@@ -28,10 +29,9 @@ SECTIONS
 	    __bss_start__ = .;
 		*(COMMON)
 		*(.bss)
-		*(.bootstrap_stack)
 		__bss_end__ = .;
 		. = ALIGN(4096);
 	}
-	/* Add a symbol that indicates the end address of the kernel. */
+
 	_kernel_end = .;
 }

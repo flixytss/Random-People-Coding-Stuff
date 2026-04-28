@@ -84,30 +84,6 @@ void map_page(virtual_address vaddr, physical_address paddr, PAGE_TABLE_FLAGS fl
     SET_ATTRIBUTE(pte, flags);
 }
 
-// i am blind i am blind i am blind i am blind i am blind
-int map_page_old(virtual_address virt_address, physical_address phys_address) {
-    page_directory *pd = current_page_directory;
-
-    pd_entry *pdentry = &pd->entries[PD_IDX(virt_address)];
-
-    if (!TEST_ATTRIBUTE(pdentry, PDE_PRESENT)) {
-        page_table *pt = (page_table*)pmm_alloc_blocks(1);
-        if (!pt) return 0;
-        memset(pt, 0, sizeof(page_table));
-
-        SET_FRAME(pdentry, (physical_address)pt);
-        SET_ATTRIBUTE(pdentry, PDE_PRESENT | PDE_READ_WRITE);
-    }
-    page_table *table = (page_table *)PAGE_PHYS_ADDR(pdentry);
-
-    pt_entry *pte = &table->entries[PT_IDX(virt_address)];
-
-    SET_FRAME(pte, phys_address);
-    SET_ATTRIBUTE(pte, PTE_PRESENT | PTE_READ_WRITE);
-
-    return 1;
-}
-
 void unmap_page(void *virtual_address) {
     pt_entry *page = get_page((uint32_t)virtual_address);
 
@@ -178,7 +154,7 @@ int init_virtual_memory_manager(void) {
     // Switch to page directory
     set_page_directory(dir);
     // Enable paging: Set PG (paging) bit 31 and PE (protection enable) bit 0 of CR0
-    __asm__ __volatile__ ("movl %CR0, %EAX; orl $0x80010000, %EAX; movl %EAX, %CR0");
+    __asm__ __volatile__ ("movl %CR0, %EAX; orl $0x80000001, %EAX; movl %EAX, %CR0");
 
     return 0;
 }

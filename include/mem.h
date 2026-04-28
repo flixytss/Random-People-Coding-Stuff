@@ -1,6 +1,7 @@
 #ifndef MEM_H
 #define MEM_H
 
+#include "multiboot2.h"
 #include "stddef.h"
 #include "stdint.h"
 
@@ -43,6 +44,7 @@ void *malloc(size_t size);
 #define malloc(size) ({ void *malloc_log(size_t siz); void *ptr = malloc_log((size)); printkf("malloc %d at line %d file %s\n", (size), __LINE__, __FILE__); ptr; })
 #endif
 
+void* realloc(void* ptr, size_t siz);
 void free(void *ptr);
 
 void  *malloc_align(size_t siz, size_t align);
@@ -51,5 +53,7 @@ void   free_align(void *ptr);
 size_t getused();
 size_t getmaxused();
 size_t gettrueused();
+
+// extern multiboot_info_t* global_multiboot;
 
 #endif

@@ -10,10 +10,10 @@
 void *heap_ptr = 0;
 
 void parse_bda() {
-  printkf("com1 port: 0x%x\n", BDA_ADDR->com_port[0]);
-  printkf("lpt1 port: 0x%x\n", BDA_ADDR->lpt_port[0]);
-  printkf("usable memory: %d KB\n", BDA_ADDR->usable_memory);
-  printkf("ebda address: 0x%p\n", BDA_ADDR->ebda_addr << 4);
+  printkf("  com1 port: 0x%x\n", BDA_ADDR->com_port[0]);
+  printkf("  lpt1 port: 0x%x\n", BDA_ADDR->lpt_port[0]);
+  printkf("  usable memory: %d KB\n", BDA_ADDR->usable_memory);
+  printkf("  ebda address: 0x%p\n", BDA_ADDR->ebda_addr << 4);
 }
 
 uint8_t dlim(char c, const char *delim) {
@@ -321,7 +321,7 @@ static void *km_alloc(struct alloc *a, size_t siz) {
   struct alloc_hdr *hdr = (struct alloc_hdr *)bl;
   hdr->ord              = ord;
   hdr->magic            = HDR_MAGIC;
-  hdr->size = siz;
+  hdr->size             = siz;
 
   return (void *)(hdr + 1);
 }
@@ -378,6 +378,7 @@ void kmalloc_init() {
   km_init(&kalloc, mem, siz);
 }
 
+
 #if !ALLOC_EXTRALOG
 void *malloc(size_t siz) { // todo: low-address priority allocation
 #else
@@ -388,9 +389,19 @@ void *malloc_log(size_t siz) {
   memset(ptr, 0, siz);
   return ptr;
 }
-
 void free(void *ptr) {
   km_free(&kalloc, ptr);
+}
+void* realloc(void* ptr, size_t siz) { // TODO: Make this use struct block
+    if (!ptr || !siz) return NULL;
+
+    char data[siz];
+    memcpy(data, ptr, siz);
+    free(ptr);
+    char* new = malloc(siz);
+    memcpy(new, data, siz);
+
+    return new;
 }
 
 void *malloc_align(size_t siz, size_t align) {

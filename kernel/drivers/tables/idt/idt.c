@@ -72,5 +72,5 @@ void init_idt() {
     idt_set_gate(128, (uint32_t)isr128, 0x08, 0x8E);
 
     idt_flush((uint32_t)&idt_ptr);
-    STI();
+    sti
 }

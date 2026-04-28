@@ -22,7 +22,6 @@ uint32_t pci_readl(uint32_t bus, uint32_t slot, uint32_t func, uint8_t off) {
   outl(PCI_CFG_ADDR, addr);
   return inl(PCI_CFG_DATA);
 }
-
 uint16_t pci_readw(uint32_t bus, uint32_t slot, uint32_t func, uint8_t off) {
   uint32_t addr = (bus << 16) | (slot << 11) | (func << 8) | (off & 0xFC) |
                   ((uint32_t)0x80000000);
@@ -70,29 +69,35 @@ void pci_writeb(uint32_t bus, uint32_t slot, uint32_t func, uint32_t off,
 
 /* high level section */
 
+const char* devicetoclass[] = {
+    "Unclassified",
+    "Mass Storage Controller",
+    "Network Controller",
+    "Display Controller",
+    "Multimedia Controller",
+    "Memory Controller",
+    "Bridge",
+    "Simple Communication Controller",
+    "Base System Peripheral",
+    "Input Device Controller ",
+    "Docking Station",
+    "Processor",
+    "Serial Bus Controller",
+    "Wireless Controller",
+    "Intelligent Controller",
+    "Satellite Communication Controller",
+    "Encryption Controller",
+    "Signal Processing Controller",
+    "Processing Accelerator",
+    "Non-Essential Instrumentation",
+    "0x3F (Reserved)",
+    "Co-Processor",
+    "0xFE (Reserved)",
+    "Unassigned Class (Vendor specific)"
+};
 const char *class2str(uint8_t class) {
-  switch (class) {
-  case 0x00:
-    return "Unclassified";
-  case 0x01:
-    return "Mass Storage Controller";
-  case 0x02:
-    return "Network Controller";
-  case 0x03:
-    return "Display Controller";
-  case 0x04:
-    return "Multimedia Controller";
-  case 0x05:
-    return "Memory Controller";
-  case 0x06:
-    return "Bridge";
-  case 0x07:
-    return "Simple Communicatin Controller";
-  case 0x08:
-    return "Base System Peripheral";
-  default:
-    return "Unknown";
-  }
+  if (class > 23) return "Unknown";
+  return devicetoclass[class];
 }
 
 void alloc_new_bus(struct pci_bus *parent, struct pci_dev *self) {
@@ -109,6 +114,7 @@ void alloc_new_bus(struct pci_bus *parent, struct pci_dev *self) {
                 offsetof(struct pci_hdr, bridge.ss_busnum));
   child->bus = parent->bus;
   child->primary = child->secondary;
+  printkf("HERE\n");
 
   if (child->secondary == parent->bus)
     parent->subordinate++;
@@ -122,7 +128,7 @@ void alloc_new_bus(struct pci_bus *parent, struct pci_dev *self) {
     end = end->next;
   }
   end->next = child;
-
+  printkf("HERE\n");
   enumerate_pcibus(child);
 }
 

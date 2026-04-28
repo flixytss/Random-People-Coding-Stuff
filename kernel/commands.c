@@ -1,3 +1,4 @@
+#include "terminal/printf.h"
 #include <commands.h>
 #include <bootoptions.h>
 #include <colors.h>
@@ -68,7 +69,7 @@ static Command commands[] = {
 
 static int num_commands = sizeof(commands) / sizeof(commands[0]);
 
-static struct drive_fs_t *fs;
+struct drive_fs_t *fs;
 
 static void cmd_help(uint8_t color) {
     printc("\n--- System ---\n", VGA_COLOR_LIGHT_CYAN);
@@ -536,9 +537,10 @@ static void cmd_uptime(uint8_t color) {
 
 static void cmd_meminfo(uint8_t color) {
     printc("\nMemory:\n", color);
-    printc("  Heap base : 0x200000\n", color);
-    printc("  (exact used bytes depend on runtime allocations)\n", color);
-    printc("  Total RAM  : detected via BIOS e820 (not yet parsed)\n", color);
+    printkf("  Heap base : 0x%p\n", &_kernel_end);
+    // printkf("  Total RAM  : %d bytes\n", global_multiboot->mem_lower * global_multiboot->mem_upper);
+    printc("BDA:\n", color);
+    parse_bda();
     printc("\n", color);
 }
 

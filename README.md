@@ -1,19 +1,20 @@
 # Gecko OS
 
 <!--toc:start-->
-* [Gecko OS](#gecko-os)
-  * [Vision](#vision)
-  * [Features](#features)
-  * [Roadmap](#roadmap)
-  * [How to Contribute](#how-to-contribute)
-  * [Building](#building)
-    * [Prerequisites (Linux)](#prerequisites-linux)
-    * [Build Commands](#build-commands)
-  * [Contact](#contact)
-  * [Screenshots](#screenshots)
-  * [Contributors](#contributors)
-  * [TODO](#todo)
-<!--toc:end-->
+
+- [Gecko OS](#gecko-os)
+  - [Vision](#vision)
+  - [Features](#features)
+  - [Roadmap](#roadmap)
+  - [How to Contribute](#how-to-contribute)
+  - [Building](#building)
+    - [Prerequisites (Linux)](#prerequisites-linux)
+    - [Build Commands](#build-commands)
+  - [Contact](#contact)
+  - [Screenshots](#screenshots)
+  - [Contributors](#contributors)
+  - [TODO](#todo)
+  <!--toc:end-->
 
 A community-built bare-metal operating system for x86 machines, written entirely from scratch.
 
@@ -58,9 +59,11 @@ A collaborative OS project where contributors build a custom operating system fr
 ## How to Contribute
 
 Submit ideas or feedback:
+
 - General feedback: [Google Forms](https://forms.gle/3aL4FJqvc8MZaJJv5)
 
 Ways to contribute:
+
 - Fix typos or improve wording
 - Add new features
 - Improve or optimize code
@@ -68,6 +71,7 @@ Ways to contribute:
 - Tell others about the project
 
 Apply contributions via:
+
 - Fork the repo, make changes, and submit a PR
 
 Add your name to the contributors list when you contribute!
@@ -76,12 +80,14 @@ Add your name to the contributors list when you contribute!
 
 ### Prerequisites (Linux)
 
-**Debian/Ubuntu:**
+**Debian and its derivatives:**
+
 ```bash
 sudo apt install build-essential binutils nasm clang qemu-system-x86 grub
 ```
 
-**Arch:**
+**Arch and its derivatives:**
+
 ```bash
 sudo pacman -S base-devel binutils nasm clang qemu-system-x86 grub
 ```
@@ -90,6 +96,11 @@ sudo pacman -S base-devel binutils nasm clang qemu-system-x86 grub
 
 - `make` - Produces `geckoos.iso` and run it
 - `make run` - Builds and runs in QEMU
+
+#### Requirements
+
+To emulate the iso with QEMU, or in a more advanced machine, you will need these:
+- More than 128mb of RAM (129 is the minimum)
 
 ## Contact
 
