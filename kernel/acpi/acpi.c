@@ -1,9 +1,6 @@
-// ------------------------------------------------------------------------------------------------
 // acpi/acpi.c
-// ------------------------------------------------------------------------------------------------
 
-#include "mem/pmm.h"
-#include "mem/vmm.h"
+#include "drivers/tables/timer/timer.h"
 #include "ports.h"
 #include <acpi/acpi.h>
 #include <ioapic/ioapic.h>
@@ -12,102 +9,20 @@
 #include <terminal/printf.h>
 #include <stdint.h>
 
-// ------------------------------------------------------------------------------------------------
-// Globals
-unsigned int g_acpiCpuCount;
+unsigned int g_acpiCpuCount = 0;
 uint8_t g_acpiCpuIds[MAX_CPU_COUNT];
-
-// ------------------------------------------------------------------------------------------------
-typedef struct AcpiHeader
-{
-    uint32_t signature;
-    uint32_t length;
-    uint8_t revision;
-    uint8_t checksum;
-    uint8_t oem[6];
-    uint8_t oemTableId[8];
-    uint32_t oemRevision;
-    uint32_t creatorId;
-    uint32_t creatorRevision;
-} __attribute__((packed)) AcpiHeader;
-
-// ------------------------------------------------------------------------------------------------
-typedef struct AcpiFadt
-{
-    AcpiHeader header;
-    uint32_t firmwareControl;
-    uint32_t dsdt;
-    uint8_t reserved;
-    uint8_t preferredPMProfile;
-    uint16_t sciInterrupt;
-    uint32_t smiCommandPort;
-    uint8_t acpiEnable;
-    uint8_t acpiDisable;
-    // TODO - fill in rest of data
-} __attribute__((packed)) AcpiFadt;
-
-// ------------------------------------------------------------------------------------------------
-typedef struct AcpiMadt
-{
-    AcpiHeader header;
-    uint32_t localApicAddr;
-    uint32_t flags;
-} __attribute__((packed)) AcpiMadt;
-
-// ------------------------------------------------------------------------------------------------
-typedef struct ApicHeader
-{
-    uint8_t type;
-    uint8_t length;
-} __attribute__((packed)) ApicHeader;
-
-// APIC structure types
-#define APIC_TYPE_LOCAL_APIC            0
-#define APIC_TYPE_IO_APIC               1
-#define APIC_TYPE_INTERRUPT_OVERRIDE    2
-
-// ------------------------------------------------------------------------------------------------
-typedef struct ApicLocalApic
-{
-    ApicHeader header;
-    uint8_t acpiProcessorId;
-    uint8_t apicId;
-    uint32_t flags;
-} __attribute__((packed)) ApicLocalApic;
-
-// ------------------------------------------------------------------------------------------------
-typedef struct ApicIoApic
-{
-    ApicHeader header;
-    uint8_t ioApicId;
-    uint8_t reserved;
-    uint32_t ioApicAddress;
-    uint32_t globalSystemInterruptBase;
-} __attribute__((packed)) ApicIoApic;
-
-// ------------------------------------------------------------------------------------------------
-typedef struct ApicInterruptOverride
-{
-    ApicHeader header;
-    uint8_t bus;
-    uint8_t source;
-    uint32_t interrupt;
-    uint16_t flags;
-} __attribute__((packed)) ApicInterruptOverride;
-
-// ------------------------------------------------------------------------------------------------
 static AcpiMadt *s_madt;
 AcpiFadt g_facp;
 
-// ------------------------------------------------------------------------------------------------
-static void AcpiParseFacp(AcpiFadt *facp)
+static void AcpiParseFacp(AcpiFadt *facp, ACPIInfo_t* log)
 {
     g_facp = *facp;
+    log->fadt = facp;
     if (facp->smiCommandPort)
     {
         IPRINT("Enabling ACPI at 0x%x (Which value's %x) with 0x%x\n", facp->smiCommandPort, inb(facp->smiCommandPort), facp->acpiEnable);
         outb(facp->smiCommandPort, facp->acpiEnable);
-        while ((inw(facp->smiCommandPort) & 1) == 0); // Waits for the bit to change
+        while ((inb(facp->smiCommandPort) & 1) == 0); // Waits for the bit to change
         IPRINT("ACPI new value: %x\n", inb(facp->smiCommandPort));
     }
     else
@@ -116,17 +31,20 @@ static void AcpiParseFacp(AcpiFadt *facp)
     }
 }
 
-// ------------------------------------------------------------------------------------------------
-static void AcpiParseApic(AcpiMadt *madt)
+static void AcpiParseApic(AcpiMadt *madt, ACPIInfo_t* log)
 {
     s_madt = madt;
 
     IPRINT("Local APIC Address = 0x%08x\n", madt->localApicAddr);
+    log->madt = madt;
+    log->localApicAddr = madt->localApicAddr;
     g_localApicAddr = (uint8_t *)(uintptr_t)madt->localApicAddr;
 
     uint8_t *p = (uint8_t *)(madt + 1);
     uint8_t *end = (uint8_t *)madt + madt->header.length;
 
+    uint8_t apics = 0;
+    uint8_t overr = 0;
     while (p < end)
     {
         ApicHeader *header = (ApicHeader *)p;
@@ -141,6 +59,7 @@ static void AcpiParseApic(AcpiMadt *madt)
             if (g_acpiCpuCount < MAX_CPU_COUNT)
             {
                 g_acpiCpuIds[g_acpiCpuCount] = s->apicId;
+                log->processors[g_acpiCpuCount] = (ACPIProcessor_t){s->acpiProcessorId, s->apicId, s->flags};
                 ++g_acpiCpuCount;
             }
         }
@@ -149,6 +68,7 @@ static void AcpiParseApic(AcpiMadt *madt)
             ApicIoApic *s = (ApicIoApic *)p;
 
             IPRINT("Found I/O APIC: %d 0x%08x %d\n", s->ioApicId, s->ioApicAddress, s->globalSystemInterruptBase);
+            log->ioapics[apics++] = (IOApic_t){s->ioApicId, s->ioApicAddress, s->globalSystemInterruptBase};
             g_ioApicAddr = (uint8_t *)(uintptr_t)s->ioApicAddress;
         }
         else if (type == APIC_TYPE_INTERRUPT_OVERRIDE)
@@ -156,6 +76,7 @@ static void AcpiParseApic(AcpiMadt *madt)
             ApicInterruptOverride *s = (ApicInterruptOverride *)p;
 
             IPRINT("Found Interrupt Override: %d %d %d 0x%04x\n", s->bus, s->source, s->interrupt, s->flags);
+            log->intoverrides[overr++] = (INTOverride_t){s->bus, s->source, s->interrupt, s->flags};
         }
         else
         {
@@ -166,8 +87,7 @@ static void AcpiParseApic(AcpiMadt *madt)
     }
 }
 
-// ------------------------------------------------------------------------------------------------
-static void AcpiParseDT(AcpiHeader *header)
+static void AcpiParseDT(AcpiHeader *header, ACPIInfo_t* log)
 {
     uint32_t signature = header->signature;
 
@@ -178,16 +98,15 @@ static void AcpiParseDT(AcpiHeader *header)
 
     if (signature == 0x50434146)
     {
-        AcpiParseFacp((AcpiFadt *)header);
+        AcpiParseFacp((AcpiFadt *)header, log);
     }
     else if (signature == 0x43495041)
     {
-        AcpiParseApic((AcpiMadt *)header);
+        AcpiParseApic((AcpiMadt *)header, log);
     }
 }
 
-// ------------------------------------------------------------------------------------------------
-static void AcpiParseRsdt(AcpiHeader *rsdt)
+static void AcpiParseRsdt(AcpiHeader *rsdt, ACPIInfo_t* log)
 {
     uint32_t *p = (uint32_t *)(rsdt + 1);
     uint32_t *end = (uint32_t *)((uint8_t*)(rsdt) + rsdt->length);
@@ -195,12 +114,11 @@ static void AcpiParseRsdt(AcpiHeader *rsdt)
     while (p < end)
     {
         uint32_t address = *p++;
-        AcpiParseDT((AcpiHeader *)(uintptr_t)address);
+        AcpiParseDT((AcpiHeader *)(uintptr_t)address, log);
     }
 }
 
-// ------------------------------------------------------------------------------------------------
-static void AcpiParseXsdt(AcpiHeader *xsdt)
+static void AcpiParseXsdt(AcpiHeader *xsdt, ACPIInfo_t* log)
 {
     uint64_t *p = (uint64_t *)(xsdt + 1);
     uint64_t *end = (uint64_t *)((uint8_t*)xsdt + xsdt->length);
@@ -208,12 +126,11 @@ static void AcpiParseXsdt(AcpiHeader *xsdt)
     while (p < end)
     {
         uint64_t address = *p++;
-        AcpiParseDT((AcpiHeader *)(uintptr_t)address);
+        AcpiParseDT((AcpiHeader *)(uintptr_t)address, log);
     }
 }
 
-// ------------------------------------------------------------------------------------------------
-static bool AcpiParseRsdp(uint8_t *p)
+static bool AcpiParseRsdp(uint8_t *p, ACPIInfo_t* log)
 {
     // Parse Root System Description Pointer
     IPRINT("RSDP found at 0x%x\n", p);
@@ -234,7 +151,7 @@ static bool AcpiParseRsdp(uint8_t *p)
     char oem[7];
     memcpy(oem, p + 9, 6);
     oem[6] = '\0';
-    IPRINT("OEM: %s; 0x%x\n", oem, p);
+    IPRINT("OEM: %s\n", oem);
 
     // Check version
     uint8_t revision = p[15];
@@ -244,7 +161,7 @@ static bool AcpiParseRsdp(uint8_t *p)
 
         uint32_t rsdtAddr = *(uint32_t *)(p + 16);
         // loop
-        AcpiParseRsdt((AcpiHeader *)(uintptr_t)rsdtAddr);
+        AcpiParseRsdt((AcpiHeader *)(uintptr_t)rsdtAddr, log);
         // loop
     }
     else if (revision == 2)
@@ -256,11 +173,11 @@ static bool AcpiParseRsdp(uint8_t *p)
 
         if (xsdtAddr)
         {
-            AcpiParseXsdt((AcpiHeader *)(uintptr_t)xsdtAddr);
+            AcpiParseXsdt((AcpiHeader *)(uintptr_t)xsdtAddr, log);
         }
         else
         {
-            AcpiParseRsdt((AcpiHeader *)(uintptr_t)rsdtAddr);
+            AcpiParseRsdt((AcpiHeader *)(uintptr_t)rsdtAddr, log);
         }
     }
     else
@@ -271,8 +188,7 @@ static bool AcpiParseRsdp(uint8_t *p)
     return true;
 }
 
-// ------------------------------------------------------------------------------------------------
-void AcpiInit()
+ACPIInfo_t AcpiInit()
 {
     // TODO - Search Extended BIOS Area
 
@@ -284,14 +200,16 @@ void AcpiInit()
     int ebda = *((short *) 0x40E);
 	ebda = ebda * 0x10 &0x000FFFFF;
 
+	ACPIInfo_t info;
+
 	for (unsigned int * addr = (unsigned int *) ebda; (int) addr<ebda+1024; addr+= 0x10/sizeof(addr)) {
 	    uint64_t signature = *(uint64_t*)addr;
 	    if (signature == 0x2052545020445352) // 'RSD PTR '
         {
             IPRINT("ACPI is in BIOS extended memory\n");
-            if (AcpiParseRsdp(p))
+            if (AcpiParseRsdp(p, &info))
             {
-                return;
+                break;
             }
         }
 	}
@@ -304,7 +222,7 @@ void AcpiInit()
         if (signature == 0x2052545020445352) // 'RSD PTR '
         {
             IPRINT("ACPI is in BIOS memory\n");
-            if (AcpiParseRsdp(p))
+            if (AcpiParseRsdp(p, &info))
             {
                 break;
             }
@@ -312,10 +230,10 @@ void AcpiInit()
 
         p += 16;
     }
+    return info;
 }
 
-// ------------------------------------------------------------------------------------------------
-unsigned int AcpiRemapIrq(unsigned int irq)
+uint32_t AcpiRemapIrq(unsigned int irq)
 {
     AcpiMadt *madt = s_madt;
 

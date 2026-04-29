@@ -36,6 +36,8 @@ void process_input(unsigned char *buffer) {
     run_command(buffer, TERM_COLOR);
 }
 
+ACPIInfo_t ACPILog;
+
 static void kmain();
 
 // Move to it own dedicated file
@@ -47,32 +49,33 @@ extern void check_for_cpuid();
 
 __attribute__((section(".text")))
 void kernel_main(unsigned long magic, unsigned long addr) {
-    // zero_bss();
 // Multiboot2
     if (magic != MULTIBOOT2_BOOTLOADER_MAGIC) {
-        printkf("Invalid magic number: 0x%x\n", (unsigned)magic);
+        EPRINT("Invalid magic number: 0x%x\n", (unsigned)magic);
         loop
     }
 
     if (addr & 7) {
-        printkf("Unaligned mbi: 0x%x\n", addr);
+        EPRINT("Unaligned mbi: 0x%x\n", addr);
         loop
     }
     check_for_cpuid(); // Checks for cpuid support
 
     // Parse the address passed from the multiboot2
     const multiboot2_parsed_t multiboot = parse_multiboot2(magic, addr);
-    AcpiInit();
+
+    ACPILog = AcpiInit();
 
 // Memory
-    pmm_init(_kernel_end, PMM_SIZE); // Just a test
-    pmm_map_region(_kernel_end, PMM_SIZE); // Same
+    pmm_init(_kernel_end, PMM_SIZE);
+    pmm_map_region(_kernel_end, PMM_SIZE);
     register_isr_handler(page_fault, 14);
     int status = init_virtual_memory_manager();
     kmalloc_init();
 
+    terminal_clear(TERM_COLOR);
     #ifdef DEBUG
-        // The prints shortcuts are two function being called, so you need to use keys in a loop
+        // The prints shortcuts are functions being called, so you need to use keys in a loop
         if (status) { EPRINT("VMM Returned %d, VMM failed (Ram lower than 129mb)\n", status); }
         else { OPRINT("VMM Returned %d, VMM was initialized successfully\n", status); }
         IPRINT("Total RAM %dkb\n", PMM_SIZE);
@@ -84,18 +87,16 @@ void kernel_main(unsigned long magic, unsigned long addr) {
     // WPRINT("WARNING\n");
     // OPRINT("OK\n");
 
-    // Setup keyboard layouts
-    set_layout(LAYOUTS[0]);
-
+    set_layout(LAYOUTS[0]); // keyboard
     init_gdt();
     init_idt();
     irq_install();
     timer_install();
-    keyboard_install();
     timer_phase(50);
+    keyboard_install();
     drives_init();
     users_init();
-    // enumerate_pci();
+    // enumerate_pci(); FIX
 
     get_kdrive(0);
     struct kdrive_t* drive;
@@ -111,8 +112,7 @@ void kernel_main(unsigned long magic, unsigned long addr) {
     }
 
     // Welcome display
-    terminal_clear(TERM_COLOR);
-    printc("----- GeckoOS v1.2 -----\n", TERM_COLOR);
+    printc("----- GeckoOS v1.3 -----\n", TERM_COLOR);
     printc("Built by random people on the internet.\n", TERM_COLOR);
     printkf("User system initialised. Default accounts: root / guest\n");
 
