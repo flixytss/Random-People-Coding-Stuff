@@ -22,6 +22,7 @@ void kprintf( int severity, char* data, ...);
 void print(char* data);
 void print_int(int n);
 void print_hex(uint32_t n);
+void hexdump(uint32_t p, uint32_t end, bool str /* If enabled, the hexdump will show it like a string */);
 
 void vga_scroll(uint8_t color);
 

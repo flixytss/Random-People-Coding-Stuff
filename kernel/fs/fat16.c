@@ -622,7 +622,7 @@ struct drive_fs_t *fat16_drive_open( struct kdrive_t *drive, struct partition_t 
 
 	if (volume.bpb.bytes_per_sector == 0 || volume.bpb.sectors_per_cluster == 0)
 	{
-		kprintf(SEVERITY_ERROR, "FAT16] Error: invalid BPB (zero bytes/sector or sectors/cluster)\n");
+		EPRINT("Invalid BPB (zero bytes/sector or sectors/cluster)\n");
 		return NULL;
 	}
 
@@ -696,7 +696,9 @@ int fat16_append_file(struct drive_fs_t *fs, char *name,
     if (!fs) return -1;
 
     // Try to read existing content first
-    static uint8_t appbuf[4096];
+    int appbuf_size = 4096;
+    uint8_t* appbuf = malloc(sizeof(uint8_t) * appbuf_size);
+    if (!appbuf) return -1;
     int total = 0;
 
     struct fs_entries_t entries = fs->get_entries((void*)fs);
@@ -722,15 +724,23 @@ int fat16_append_file(struct drive_fs_t *fs, char *name,
             chunk = entries.entries[found].file.read(
                 (void*)&entries.entries[found].file, j * 128, 128, tmp);
             if (chunk <= 0) break;
-            for (int k = 0; k < chunk && total < 4000; k++)
+            for (int k = 0; k < chunk && total < 4000; k++) {
+                if (total > appbuf_size) {
+                    appbuf_size += 4096;
+                    uint8_t* new = malloc(appbuf_size);
+                    memcpy(new, appbuf, total);
+                    free(appbuf);
+                    appbuf = new;
+                }
                 appbuf[total++] = tmp[k];
+            }
             j++;
         }
         fat16_delete_file(fs, name);
     }
 
     // Append new content
-    for (size_t i = 0; i < len && total < 4095; i++)
+    for (size_t i = 0; i < len && total < appbuf_size; i++)
         appbuf[total++] = content[i];
 
     return fat16_create_file(fs, name, appbuf, (size_t)total);
@@ -751,7 +761,7 @@ int fat16_mkdir(struct drive_fs_t *fs, char *name) {
 
     uint32_t total_entries = root_dir_sectors * (drive->sector_size / 32);
     for (uint32_t i = 0; i < total_entries; i++) {
-        FAT16_DirEntry *e = (FAT16_DirEntry *)root_buf + i;
+        FAT16_DirEntry *e = (FAT16_DirEntry *)root_buf + (sizeof(FAT16_DirEntry) * i); // CHECK IF ERR
         if (e->name[0] == FAT16_ENTRY_FREE || e->name[0] == FAT16_ENTRY_END) {
             // Found a free slot – build a minimal directory entry
             memset(e, 0, sizeof(FAT16_DirEntry));

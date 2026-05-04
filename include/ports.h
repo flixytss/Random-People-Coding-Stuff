@@ -9,6 +9,8 @@
 #define sti     asm volatile("sti");
 #define hlt     asm volatile("hlt");
 #define loop    cli for (;;) { hlt } // Shorcut for a halting and no-interruptions loop
+#define CHECK_BIT(var,pos) (((var)>>(pos)) & 1)
+
 
 static inline void outb(uint16_t port, uint8_t val) {
     asm volatile ("outb %0, %1" : : "a"(val), "Nd"(port));

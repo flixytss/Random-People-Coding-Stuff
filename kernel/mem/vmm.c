@@ -158,3 +158,11 @@ int init_virtual_memory_manager(void) {
 
     return 0;
 }
+void disable_paging() {
+    __asm__ __volatile__(
+        "movl %%CR0, %%ECX\n"
+        "andl %%ECX, %0\n"
+        "movl %%CR0, %%ECX\n"
+        : : "r"(~0x80000000)
+    );
+}

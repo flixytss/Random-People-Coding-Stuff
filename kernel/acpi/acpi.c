@@ -1,6 +1,7 @@
 // acpi/acpi.c
 
 #include "drivers/tables/timer/timer.h"
+#include "drivers/vga.h"
 #include "ports.h"
 #include <acpi/acpi.h>
 #include <ioapic/ioapic.h>
@@ -8,36 +9,33 @@
 #include <string.h>
 #include <terminal/printf.h>
 #include <stdint.h>
+#include <terminal/terminal.h>
 
 unsigned int g_acpiCpuCount = 0;
 uint8_t g_acpiCpuIds[MAX_CPU_COUNT];
 static AcpiMadt *s_madt;
-AcpiFadt g_facp;
+static AcpiFadt* g_facp;
 
-static void AcpiParseFacp(AcpiFadt *facp, ACPIInfo_t* log)
+uint32_t SLP_TYPa, SLP_TYPb;
+
+static void AcpiParseFacp(AcpiFadt *facp)
 {
-    g_facp = *facp;
-    log->fadt = facp;
-    if (facp->smiCommandPort)
+    g_facp = facp;
+    if (facp->SMI_CMD)
     {
-        IPRINT("Enabling ACPI at 0x%x (Which value's %x) with 0x%x\n", facp->smiCommandPort, inb(facp->smiCommandPort), facp->acpiEnable);
-        outb(facp->smiCommandPort, facp->acpiEnable);
-        while ((inb(facp->smiCommandPort) & 1) == 0); // Waits for the bit to change
-        IPRINT("ACPI new value: %x\n", inb(facp->smiCommandPort));
-    }
-    else
-    {
-        WPRINT("ACPI already enabled\n");
+        IPRINT("Enabling ACPI at 0x%x (Which value's %x) with 0x%x\n", facp->SMI_CMD, inb(facp->SMI_CMD), facp->ACPI_ENABLE);
+        outb(facp->SMI_CMD, facp->ACPI_ENABLE);
+        sleep(3);
+        while ((inw(facp->PM1a_CNT_BLK) & 1) == 0); // Waits for the bit to change
+        IPRINT("ACPI control value: %x\n", inb(facp->PM1a_CNT_BLK));
     }
 }
 
-static void AcpiParseApic(AcpiMadt *madt, ACPIInfo_t* log)
+static void AcpiParseApic(AcpiMadt *madt)
 {
     s_madt = madt;
 
     IPRINT("Local APIC Address = 0x%08x\n", madt->localApicAddr);
-    log->madt = madt;
-    log->localApicAddr = madt->localApicAddr;
     g_localApicAddr = (uint8_t *)(uintptr_t)madt->localApicAddr;
 
     uint8_t *p = (uint8_t *)(madt + 1);
@@ -59,7 +57,6 @@ static void AcpiParseApic(AcpiMadt *madt, ACPIInfo_t* log)
             if (g_acpiCpuCount < MAX_CPU_COUNT)
             {
                 g_acpiCpuIds[g_acpiCpuCount] = s->apicId;
-                log->processors[g_acpiCpuCount] = (ACPIProcessor_t){s->acpiProcessorId, s->apicId, s->flags};
                 ++g_acpiCpuCount;
             }
         }
@@ -68,7 +65,6 @@ static void AcpiParseApic(AcpiMadt *madt, ACPIInfo_t* log)
             ApicIoApic *s = (ApicIoApic *)p;
 
             IPRINT("Found I/O APIC: %d 0x%08x %d\n", s->ioApicId, s->ioApicAddress, s->globalSystemInterruptBase);
-            log->ioapics[apics++] = (IOApic_t){s->ioApicId, s->ioApicAddress, s->globalSystemInterruptBase};
             g_ioApicAddr = (uint8_t *)(uintptr_t)s->ioApicAddress;
         }
         else if (type == APIC_TYPE_INTERRUPT_OVERRIDE)
@@ -76,7 +72,6 @@ static void AcpiParseApic(AcpiMadt *madt, ACPIInfo_t* log)
             ApicInterruptOverride *s = (ApicInterruptOverride *)p;
 
             IPRINT("Found Interrupt Override: %d %d %d 0x%04x\n", s->bus, s->source, s->interrupt, s->flags);
-            log->intoverrides[overr++] = (INTOverride_t){s->bus, s->source, s->interrupt, s->flags};
         }
         else
         {
@@ -87,26 +82,19 @@ static void AcpiParseApic(AcpiMadt *madt, ACPIInfo_t* log)
     }
 }
 
-static void AcpiParseDT(AcpiHeader *header, ACPIInfo_t* log)
+static void AcpiParseDT(AcpiHeader *header)
 {
-    uint32_t signature = header->signature;
-
-    char sigStr[5];
-    memcpy(sigStr, &signature, 4);
-    sigStr[4] = 0;
-    // loop
-
-    if (signature == 0x50434146)
+    if (header->signature == 0x50434146)
     {
-        AcpiParseFacp((AcpiFadt *)header, log);
+        AcpiParseFacp((AcpiFadt *)header);
     }
-    else if (signature == 0x43495041)
+    else if (header->signature == 0x43495041)
     {
-        AcpiParseApic((AcpiMadt *)header, log);
+        AcpiParseApic((AcpiMadt *)header);
     }
 }
 
-static void AcpiParseRsdt(AcpiHeader *rsdt, ACPIInfo_t* log)
+static void AcpiParseRsdt(AcpiHeader *rsdt)
 {
     uint32_t *p = (uint32_t *)(rsdt + 1);
     uint32_t *end = (uint32_t *)((uint8_t*)(rsdt) + rsdt->length);
@@ -114,11 +102,11 @@ static void AcpiParseRsdt(AcpiHeader *rsdt, ACPIInfo_t* log)
     while (p < end)
     {
         uint32_t address = *p++;
-        AcpiParseDT((AcpiHeader *)(uintptr_t)address, log);
+        AcpiParseDT((AcpiHeader *)(uintptr_t)address);
     }
 }
 
-static void AcpiParseXsdt(AcpiHeader *xsdt, ACPIInfo_t* log)
+static void AcpiParseXsdt(AcpiHeader *xsdt)
 {
     uint64_t *p = (uint64_t *)(xsdt + 1);
     uint64_t *end = (uint64_t *)((uint8_t*)xsdt + xsdt->length);
@@ -126,11 +114,11 @@ static void AcpiParseXsdt(AcpiHeader *xsdt, ACPIInfo_t* log)
     while (p < end)
     {
         uint64_t address = *p++;
-        AcpiParseDT((AcpiHeader *)(uintptr_t)address, log);
+        AcpiParseDT((AcpiHeader *)(uintptr_t)address);
     }
 }
 
-static bool AcpiParseRsdp(uint8_t *p, ACPIInfo_t* log)
+static bool AcpiParseRsdp(uint8_t *p)
 {
     // Parse Root System Description Pointer
     IPRINT("RSDP found at 0x%x\n", p);
@@ -161,7 +149,7 @@ static bool AcpiParseRsdp(uint8_t *p, ACPIInfo_t* log)
 
         uint32_t rsdtAddr = *(uint32_t *)(p + 16);
         // loop
-        AcpiParseRsdt((AcpiHeader *)(uintptr_t)rsdtAddr, log);
+        AcpiParseRsdt((AcpiHeader *)(uintptr_t)rsdtAddr);
         // loop
     }
     else if (revision == 2)
@@ -173,11 +161,11 @@ static bool AcpiParseRsdp(uint8_t *p, ACPIInfo_t* log)
 
         if (xsdtAddr)
         {
-            AcpiParseXsdt((AcpiHeader *)(uintptr_t)xsdtAddr, log);
+            AcpiParseXsdt((AcpiHeader *)(uintptr_t)xsdtAddr);
         }
         else
         {
-            AcpiParseRsdt((AcpiHeader *)(uintptr_t)rsdtAddr, log);
+            AcpiParseRsdt((AcpiHeader *)(uintptr_t)rsdtAddr);
         }
     }
     else
@@ -188,7 +176,7 @@ static bool AcpiParseRsdp(uint8_t *p, ACPIInfo_t* log)
     return true;
 }
 
-ACPIInfo_t AcpiInit()
+void AcpiInit()
 {
     // TODO - Search Extended BIOS Area
 
@@ -200,16 +188,14 @@ ACPIInfo_t AcpiInit()
     int ebda = *((short *) 0x40E);
 	ebda = ebda * 0x10 &0x000FFFFF;
 
-	ACPIInfo_t info;
-
 	for (unsigned int * addr = (unsigned int *) ebda; (int) addr<ebda+1024; addr+= 0x10/sizeof(addr)) {
 	    uint64_t signature = *(uint64_t*)addr;
 	    if (signature == 0x2052545020445352) // 'RSD PTR '
         {
             IPRINT("ACPI is in BIOS extended memory\n");
-            if (AcpiParseRsdp(p, &info))
+            if (AcpiParseRsdp(p))
             {
-                break;
+                goto l;
             }
         }
 	}
@@ -222,15 +208,16 @@ ACPIInfo_t AcpiInit()
         if (signature == 0x2052545020445352) // 'RSD PTR '
         {
             IPRINT("ACPI is in BIOS memory\n");
-            if (AcpiParseRsdp(p, &info))
+            if (AcpiParseRsdp(p))
             {
-                break;
+                goto l;                
             }
         }
 
         p += 16;
     }
-    return info;
+    l:
+    printkf("RESET_REG: 0x%x\nSLEEP_REG: 0x%x", g_facp->RESET_REG.address, g_facp->SLEEP_CONTROL_REG.address);
 }
 
 uint32_t AcpiRemapIrq(unsigned int irq)
@@ -260,4 +247,10 @@ uint32_t AcpiRemapIrq(unsigned int irq)
     }
 
     return irq;
+}
+void ACPIPoweroff() {
+    if (g_facp->ACPI_ENABLE == 0) return;
+    outw((unsigned int) g_facp->PM1a_CNT_BLK, g_facp->SLEEP_CONTROL_REG.address | g_facp->ACPI_ENABLE );
+	if ( g_facp->PM1b_CNT_BLK != 0 )
+		outw((unsigned int) g_facp->PM1b_CNT_BLK, g_facp->SLEEP_STATUS_REG.address | g_facp->ACPI_ENABLE );
 }

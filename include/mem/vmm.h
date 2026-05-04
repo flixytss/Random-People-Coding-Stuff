@@ -71,5 +71,6 @@ int map_page_old(virtual_address phys_address, physical_address virt_address);
 void map_page(virtual_address vaddr, physical_address paddr, PAGE_TABLE_FLAGS flags);
 void unmap_page(void *virtual_address);
 int init_virtual_memory_manager(void);
+void disable_paging(void);
 
 #endif // VMM_H

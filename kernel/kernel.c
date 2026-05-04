@@ -1,5 +1,6 @@
 //#include "kernel.h"
 #include "acpi/acpi.h"
+#include "apic/localapic.h"
 #include "bootoptions.h"
 #include "drivers/pci.h"
 #include "drivers/tables/isr/isr.h"
@@ -28,16 +29,14 @@
 #include <cpuid.h>
 #include <mem/vmm.h>
 #include <mem/pmm.h>
+#include <ioapic/ioapic.h>
 
 #define GECKOS_VERSION 1.34f
-#define DEBUG
-#define PMM_SIZE multiboot.mem_info->mem_lower + multiboot.mem_info->mem_upper // 4096 * 40
+#define PMM_SIZE multiboot.mem_info->mem_lower + multiboot.mem_info->mem_upper
 
 void process_input(unsigned char *buffer) {
     run_command(buffer, TERM_COLOR);
 }
-
-ACPIInfo_t ACPILog;
 
 static void kmain();
 
@@ -63,18 +62,25 @@ void kernel_main(unsigned long magic, unsigned long addr) {
     check_for_cpuid(); // Checks for cpuid support
 
     // Parse the address passed from the multiboot2
+    terminal_clear(TERM_COLOR);
     const multiboot2_parsed_t multiboot = parse_multiboot2(magic, addr);
 
-    ACPILog = AcpiInit();
-
+    init_gdt();
+    init_idt();
+    irq_install();
+    timer_install();
+    timer_phase(50);
+    keyboard_install();
+    AcpiInit();
 // Memory
+    terminal_clear(TERM_COLOR);
+
     pmm_init(_kernel_end, PMM_SIZE);
     pmm_map_region(_kernel_end, PMM_SIZE);
     register_isr_handler(page_fault, 14);
     int status = init_virtual_memory_manager();
     kmalloc_init();
 
-    terminal_clear(TERM_COLOR);
     #ifdef DEBUG
         // The prints shortcuts are functions being called, so you need to use keys in a loop
         if (status) { EPRINT("VMM Returned %d, VMM failed (Ram lower than 129mb)\n", status); }
@@ -89,22 +95,16 @@ void kernel_main(unsigned long magic, unsigned long addr) {
     // OPRINT("OK\n");
 
     set_layout(LAYOUTS[0]); // keyboard
-    init_gdt();
-    init_idt();
-    irq_install();
-    timer_install();
-    timer_phase(50);
-    keyboard_install();
     drives_init();
     users_init();
+    IoApicInit();
+    LocalApicInit();
     // enumerate_pci(); FIX
 
     get_kdrive(0);
     struct kdrive_t* drive;
-    if ((drive = get_kdrive(1)) == 0x0) {
-        WPRINT("No slave drive found. Is there any drive attached as a second drive?\n");
-    }
-    if (drive != 0x0) {
+    if ((drive = get_kdrive(32)) == NULL) { WPRINT("No slave drive found. Is there any drive attached as a second drive?\n"); } else { OPRINT("Slave drive found"); }
+    if (drive != NULL) {
         if ((fs = fs_drive_open(drive)) == 0) {
             WPRINT("Filesystem mount failed. Is that drive a valid FAT16 image?\n");
         } else {
@@ -113,6 +113,7 @@ void kernel_main(unsigned long magic, unsigned long addr) {
     }
 
     // Welcome display
+    set_printkf_color(VGA_COLOR_LIGHT_CYAN, 1);
     printkf("\n----- GeckoOS v%.2f -----\n", GECKOS_VERSION);
     printc("Built by random people on the internet.\n", TERM_COLOR);
     printkf("User system initialised. Default accounts: root / guest\n");
@@ -120,7 +121,7 @@ void kernel_main(unsigned long magic, unsigned long addr) {
     kmain();
 
     printkf("\nReturned from main function, Rebooting...\n");
-    if (drive) free(drive->partitions.partitions);
+    // if (drive) free(drive->partitions.partitions);
     reboot();
 }
 
@@ -146,7 +147,10 @@ static void kmain()
 
         unsigned char buff[512];
         input(buff, 512, TERM_COLOR);
-        if (strcmp(buff, "return") == 0) break;
+        if (strcmp(buff, "return") == 0) {
+            // ACPIPoweroff();
+            return;
+        }
         process_input(buff);
     }
     return;

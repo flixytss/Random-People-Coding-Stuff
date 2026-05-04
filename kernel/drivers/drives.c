@@ -49,7 +49,6 @@ void register_kdrive(struct kdrive_t *drive)
 
 struct kdrive_t *get_kdrive( int i )
 {
-    for ( int x = 0; x < 32; x++ ) if (drives[x].read) printkf("%d: %d\n", x, drives[x].read);
 	if (drives[i].read == 0)
 		return NULL;
 	return &drives[i];

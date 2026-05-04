@@ -21,17 +21,70 @@ typedef struct AcpiHeader
     uint32_t creatorRevision;
 } __attribute__((packed)) AcpiHeader;
 
-typedef struct AcpiFadt
-{
-    AcpiHeader header;
-    uint32_t firmwareControl;
-    uint32_t dsdt;
-    uint8_t reserved;
-    uint8_t preferredPMProfile;
-    uint16_t sciInterrupt;
-    uint32_t smiCommandPort;
-    uint8_t acpiEnable;
-    uint8_t acpiDisable;
+typedef struct AcpiGenericAddress {
+	uint8_t space_id;		/* Address space where struct or register exists */
+	uint8_t bit_width;		/* Size in bits of given register */
+	uint8_t bit_offset;		/* Bit offset within the register */
+	uint8_t access_width;	/* Minimum Access size (ACPI 3.0) */
+	int64_t address;		/* 64-bit address of struct or register */
+} __attribute__((packed)) AcpiGenericAddress_t;
+typedef struct AcpiFadt {
+    AcpiHeader  header;
+    int         firmware_ctrl;
+    uint32_t    dsdt_addr;
+    char        reserved1;
+    char        preferred_pm_Profile;
+    int16_t     SCI_INT;
+    int         SMI_CMD;
+    char        ACPI_ENABLE;
+    char        ACPI_DISABLE;
+    char        S4BIOS_REQ;
+    char        PSTATE_CNT;
+    int         PM1a_EVT_BLK;
+    int         PM1b_EVT_BLK;
+    int         PM1a_CNT_BLK;
+    int         PM1b_CNT_BLK;
+    int         PM2_CNT_BLK;
+    int         PM_TMR_BLK;
+    int         GPE0_BLK;
+    int         GPE1_BLK;
+    char        PM1_EVT_LEN;
+    char        PM1_CNT_LEN;
+    char        PM2_CNT_LEN;
+    char        PM_TMR_LEN;
+    char        GPE0_BLK_LEN;
+    char        GPE1_BLK_LEN;
+    char        GPE1_BASE;
+    char        CST_CNT;
+    int16_t     P_LVL2_LAT;
+    int16_t     P_LVL3_LAT;
+    int16_t     FLUSH_SIZE;
+    int16_t     FLUSH_STRIDE;
+    char        DUTY_OFFSET;
+    char        DUTY_WIDTH;
+    char        DAY_ALRM;
+    char        MON_ALRM;
+    char        CENTURY;
+    int16_t     IAPC_BOOT_ARCH;
+    char        reserved2;
+    int         flags;
+    AcpiGenericAddress_t        RESET_REG;
+    char        RESET_VALUE;
+    int16_t     ARM_BOOT_ARCH;
+    char        fadt_minor_version;
+    int64_t     X_FIRMWARE_CTRL;
+    int64_t     X_DSDT;
+    AcpiGenericAddress_t        X_PM1a_EVT_BLK;
+    AcpiGenericAddress_t        X_PM1b_EVT_BLK;
+    AcpiGenericAddress_t        X_PM1a_CNT_BLK;
+    AcpiGenericAddress_t        X_PM1b_CNT_BLK;
+    AcpiGenericAddress_t        X_PM2_CNT_BLK;
+    AcpiGenericAddress_t        X_PM_TMR_BLK;
+    AcpiGenericAddress_t        X_GPE0_BLK;
+    AcpiGenericAddress_t        X_GPE1_BLK;
+    AcpiGenericAddress_t        SLEEP_CONTROL_REG;
+    AcpiGenericAddress_t        SLEEP_STATUS_REG;
+    int64_t     hypervisor_vendor_identity;
 } __attribute__((packed)) AcpiFadt;
 
 typedef struct AcpiMadt
@@ -74,40 +127,13 @@ typedef struct ApicInterruptOverride
     uint32_t interrupt;
     uint16_t flags;
 } __attribute__((packed)) ApicInterruptOverride;
+typedef struct DSDT {
+    AcpiHeader header;
+    char* block;
+} __attribute__((packed)) DSDT_t;
 
 extern unsigned int g_acpiCpuCount;
 extern uint8_t g_acpiCpuIds[MAX_CPU_COUNT];
 
-#define ACPIPROC_NON_DEFINED    0xff
-
-typedef struct ACPIProcessor {
-    uint8_t         processorId;
-    uint8_t         apicId;
-    uint32_t        flags;
-} ACPIProcessor_t;
-typedef struct IOApic {
-    uint8_t         ioApicId;
-    uint32_t        ioApicAddress;
-    uint32_t        globalSystemInterruptBase;
-} IOApic_t;
-typedef struct INTOverride {
-    uint8_t         bus;
-    uint8_t         source;
-    uint32_t        interrupt;
-    uint16_t        flags;
-} INTOverride_t;
-
-typedef struct ACPIInfo {
-    uint32_t        localApicAddr;
-    ACPIProcessor_t processors[MAX_CPU_COUNT];
-    IOApic_t        ioapics[MAX_IOAPICS];
-    INTOverride_t   intoverrides[MAX_INTOVERR];
-
-    AcpiFadt*       fadt;
-    AcpiMadt*       madt;
-    AcpiHeader*     acpiHeader;
-    uint32_t        rsdp;
-} ACPIInfo_t;
-
-ACPIInfo_t AcpiInit();
-uint32_t AcpiRemapIrq(unsigned int irq);
+void AcpiInit();
+void ACPIPoweroff();

@@ -1,9 +1,11 @@
+#include "terminal/printf.h"
 #include <drivers/keyboard.h>
 #include <drivers/vga.h>
 #include <mem.h>
 #include <terminal/terminal.h>
 #include <gk/gk.h>
 #include <stdint.h>
+#include <string.h>
 
 uint16_t terminal_column = 0; 
 uint16_t terminal_row = 0;
@@ -84,6 +86,7 @@ void vga_scroll(uint8_t color) {
 	for (size_t i = 0; i < VGA_TEXT_WIDTH; i++)
 		buff[count + i] = vga_entry(' ', color);
 }
+
 
 void terminal_clear(uint8_t color) {
     vga_clear(color);
@@ -251,4 +254,15 @@ void print_hex(uint32_t n)
         putchar( tmp+'0', VGA_COLOR_WHITE);
     }
 
+}
+
+void hexdump(uint32_t p, uint32_t end, bool str /* If enabled, the hexdump will show it like a string */) {
+    printkf("Hexdump from 0x%x to 0x%x:\n", p, end);
+    while (p++ < end) {
+        if (str) {
+            putchar(*(unsigned char*)p, VGA_COLOR_WHITE);
+        } else {
+            printkf("0x%x: 0x%x or %d\n", p, *(unsigned char*)p, *(unsigned char*)p);
+        }
+    }
 }

@@ -157,6 +157,10 @@ int atoi(const char *str) {
 
   return res * sgn;
 }
+int toupper(int c) { return (c >= 0x61 && c <= 0x7A) ? c - 32 : c; }
+int tolower(int c) { return (c >= 0x41 && c <= 0x5A) ? c + 32 : c; }
+int isprint(int c) { return (c >= 0x20 && c <= 0x7E); }
+int isxdigit(int c) { return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'); }
 
 void zero_bss() {
   uint8_t *p = &__bss_start__;

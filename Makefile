@@ -10,7 +10,7 @@ LD = ld
 OBJCOPY = objcopy
 OBJCOPY_ARGS = -O binary
 include_folder = include
-CC_FLAGS = -target i386-linux-gnu -march=i686 -m32 -ffreestanding -nostdlib -fno-builtin -Wno-array-bounds -fno-stack-protector -g -c $(addprefix -I,$(include_folder))
+CC_FLAGS = -DDEBUG -target i386-linux-gnu -march=i686 -m32 -ffreestanding -nostdlib -fno-builtin -Wno-array-bounds -fno-stack-protector -g -c $(addprefix -I,$(include_folder))
 LD_FLAGS = -m elf_i386
 ISO = geckoos.iso
 LINKERF = linker.ld
@@ -25,7 +25,7 @@ OBJECTS := $(patsubst ./kernel/%.c,./build/%.o, $(SOURCES))
 # then all the .s's, name change to avoid conflict with .c sources w the same name
 OBJECTS := $(patsubst %.s,./build/%_s.o, $(OBJECTS))
 
-.DEFAULT_GOAL: $(ISO)
+.DEFAULT_GOAL := $(ISO)
 
 # If no clang detected, use gcc
 build/%.o: kernel/%.c

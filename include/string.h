@@ -4,12 +4,6 @@
 #include <stddef.h>
 #include "stdint.h"
 
-// for gk
-#define is_digit(c) c >= '0' && c <= '9'
-#define is_alpha(c) (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
-#define is_alnum(c) is_alpha(c) || is_digit(c)
-#define is_space(c) c == ' ' || c == '\t'
-// normal
 #define isdigit(c) c >= '0' && c <= '9'
 #define isalpha(c) (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
 #define isalnum(c) isalpha(c) || isdigit(c)
@@ -33,3 +27,7 @@ char   *strchr(const char *s, int c);
 char   *strrchr(const char *s, int c);
 char   *strdup(const char *s);
 int     atoi(const char *str);
+int     toupper(int c);
+int     tolower(int c);
+int     isprint(int c);
+int     isxdigit(int c);

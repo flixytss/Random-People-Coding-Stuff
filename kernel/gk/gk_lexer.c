@@ -100,16 +100,16 @@ bool gk_lex(GkState* s, const char* src) {
         while (i < src_len && src[i] != '\n') {
             char c = src[i];
 
-            if (is_space(c)) { i++; continue; }
+            if (isspace(c)) { i++; continue; }
 
             if (c == '#') {
                 while (i < src_len && src[i] != '\n') i++;
                 continue;
             }
 
-            if (is_digit(c)) {
+            if (isdigit(c)) {
                 int val = 0;
-                while (i < src_len && is_digit(src[i])) {
+                while (i < src_len && isdigit(src[i])) {
                     val = val * 10 + (src[i] - '0');
                     i++;
                 }
@@ -143,10 +143,10 @@ bool gk_lex(GkState* s, const char* src) {
                 continue;
             }
 
-            if (is_alpha(c)) {
+            if (isalpha(c)) {
                 char buf[64];
                 int  bi = 0;
-                while (i < src_len && is_alnum(src[i]) && bi < 63) {
+                while (i < src_len && isalnum(src[i]) && bi < 63) {
                     buf[bi++] = src[i++];
                 }
                 buf[bi] = 0;
